@@ -1,7 +1,7 @@
 {% macro file_format_clause() %}
   {%- set file_format = config.get('file_format', validator=validation.any[basestring]) -%}
   {%- if file_format is not none %}
-    using {{ file_format }}
+    format = '{{ file_format }}'
   {%- endif %}
 {%- endmacro -%}
 
@@ -9,7 +9,7 @@
   {%- set location_root = config.get('location_root', validator=validation.any[basestring]) -%}
   {%- set identifier = model['alias'] -%}
   {%- if location_root is not none %}
-    location '{{ location_root }}/{{ identifier }}'
+    location = '{{ location_root }}/{{ identifier }}'
   {%- endif %}
 {%- endmacro -%}
 
@@ -72,9 +72,10 @@
 
 {% macro presto__create_table_as(temporary, relation, sql) -%}
   create table {{ relation }}
-  {{ file_format_clause() }}
-  {{ location_clause() }}
-  as (
+  WITH (
+    {{ file_format_clause() }}
+    {{ location_clause() }}
+  ) AS (
     {{ sql }}
   );
 {% endmacro %}
