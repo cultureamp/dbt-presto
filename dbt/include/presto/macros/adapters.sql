@@ -1,12 +1,21 @@
+{% macro file_format_clause() %}
+  {%- set file_format = config.get('file_format', validator=validation.any[basestring]) -%}
+  {%- if file_format is not none %}
+    using {{ file_format }}
+  {%- endif %}
+{%- endmacro -%}
 
--- - get_catalog
--- - list_relations_without_caching
--- - get_columns_in_relation
+{% macro location_clause() %}
+  {%- set location_root = config.get('location_root', validator=validation.any[basestring]) -%}
+  {%- set identifier = model['alias'] -%}
+  {%- if location_root is not none %}
+    location '{{ location_root }}/{{ identifier }}'
+  {%- endif %}
+{%- endmacro -%}
 
 {% macro presto_ilike(column, value) -%}
 	regexp_like({{ column }}, '(?i)\A{{ value }}\Z')
 {%- endmacro %}
-
 
 {% macro presto__get_columns_in_relation(relation) -%}
   {% call statement('get_columns_in_relation', fetch_result=True) %}
@@ -62,8 +71,9 @@
 
 
 {% macro presto__create_table_as(temporary, relation, sql) -%}
-  create table
-    {{ relation }}
+  create table {{ relation }}
+  {{ file_format_clause() }}
+  {{ location_clause() }}
   as (
     {{ sql }}
   );
@@ -96,7 +106,7 @@
 {%- endmacro %}
 
 
-{# On Presto, 'cascade' isn't supported so we have to manually cascade. #}
+{# On Presto, 'cascade' isnt supported so we have to manually cascade. #}
 {% macro presto__drop_schema(relation) -%}
   {% for row in list_relations_without_caching(relation) %}
     {% set rel_db = row[0] %}
