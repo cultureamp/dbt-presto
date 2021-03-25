@@ -160,6 +160,7 @@ class PrestoConnectionManager(SQLConnectionManager):
             http_scheme = "https"
         else:
             auth = prestodb.constants.DEFAULT_AUTH
+            http_headers = {"x-trino-user": credentials.user}
             http_scheme = "http"
 
         # it's impossible for presto to fail here as 'connections' are actually
@@ -172,7 +173,8 @@ class PrestoConnectionManager(SQLConnectionManager):
             schema=credentials.schema,
             http_scheme=http_scheme,
             auth=auth,
-            isolation_level=IsolationLevel.AUTOCOMMIT
+            isolation_level=IsolationLevel.AUTOCOMMIT,
+            http_headers=http_headers
         )
         connection.state = 'open'
         connection.handle = ConnectionWrapper(presto_conn)
